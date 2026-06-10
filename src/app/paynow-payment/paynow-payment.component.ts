@@ -62,8 +62,6 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   pay(): void {
-    this.refreshPaymentState(null);
-
     if (!this.paymentState.paymentUrl) {
       return;
     }

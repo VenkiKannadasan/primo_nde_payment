@@ -55,4 +55,26 @@ describe('PayNowPaymentComponent', () => {
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement | null;
     expect(button).toBeNull();
   });
+
+  it('keeps the existing payment URL stable when clicked', async () => {
+    const fixture = await createComponent({
+      formBaseUrl: 'https://form.gov.sg/example',
+      nameFieldId: 'name',
+      patronIdFieldId: 'patron',
+      amountFieldId: 'amount',
+      openInSameTab: false,
+    });
+    const openSpy = spyOn(window, 'open');
+    const component = fixture.componentInstance;
+
+    component.hostComponent = {};
+    component.pay();
+
+    expect(openSpy).toHaveBeenCalledWith(
+      jasmine.stringMatching(/^https:\/\/form\.gov\.sg\/example\?/),
+      '_blank',
+      'noopener,noreferrer',
+    );
+    expect(component.paymentState.visible).toBeTrue();
+  });
 });
