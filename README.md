@@ -49,6 +49,8 @@ The add-on hides the button when any required FormSG config is missing, the patr
 
 Use `amountMultiplier: 1` when FormSG should receive the same displayed SGD amount. For example, `0.40 SGD` is sent as `0.40`. Only use another multiplier if a payment form explicitly requires a different unit.
 
+To temporarily remove the PayNow button during a payment gateway or FormSG issue, deactivate or disable this add-on in Alma for the affected view. No JSON flag is required.
+
 ## NDE Hook
 
 The component is registered in `src/app/custom1-module/customComponentMappings.ts` for:
