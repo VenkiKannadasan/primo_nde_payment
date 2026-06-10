@@ -4,6 +4,11 @@ import { PayNowPaymentComponent } from './paynow-payment.component';
 
 describe('PayNowPaymentComponent', () => {
   async function createComponent(moduleParameters: Record<string, unknown>) {
+    const finesPage = document.createElement('main');
+    finesPage.setAttribute('data-testid', 'test-fines-page');
+    finesPage.textContent = 'Current fines balance is 15.50 SGD';
+    document.body.appendChild(finesPage);
+
     await TestBed.configureTestingModule({
       imports: [CommonModule],
       declarations: [PayNowPaymentComponent],
@@ -34,7 +39,10 @@ describe('PayNowPaymentComponent', () => {
     return fixture;
   }
 
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    document.querySelectorAll('[data-testid="test-fines-page"]').forEach((element) => element.remove());
+  });
 
   it('renders the configured payment button when fine context is available', async () => {
     const fixture = await createComponent({

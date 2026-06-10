@@ -20,6 +20,8 @@ const TOKEN_SERVICE_PATHS = [
 
 export function extractPatronFineContext(...sources: unknown[]): PatronFineContext | null {
   const mergedCandidate: PatronFineCandidate = {};
+  const requiresVisibleFineAmount = sources.some(isDomTextSource);
+  let visibleFineAmount: number | undefined;
 
   for (const source of sources) {
     const candidate = extractPatronFineCandidate(source);
@@ -32,9 +34,21 @@ export function extractPatronFineContext(...sources: unknown[]): PatronFineConte
       mergedCandidate.patronId = candidate.patronId;
     }
 
-    if (mergedCandidate.fineAmount === undefined && candidate.fineAmount !== undefined) {
+    if (isDomTextSource(source) && visibleFineAmount === undefined && candidate.fineAmount !== undefined) {
+      visibleFineAmount = candidate.fineAmount;
+    }
+
+    if (
+      !requiresVisibleFineAmount
+      && mergedCandidate.fineAmount === undefined
+      && candidate.fineAmount !== undefined
+    ) {
       mergedCandidate.fineAmount = candidate.fineAmount;
     }
+  }
+
+  if (requiresVisibleFineAmount) {
+    mergedCandidate.fineAmount = visibleFineAmount;
   }
 
   return normalizePatronFineCandidate(mergedCandidate);

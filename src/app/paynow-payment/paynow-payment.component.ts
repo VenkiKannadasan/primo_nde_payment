@@ -30,6 +30,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   paymentState: PaymentState;
 
   private storeSubscription?: Subscription;
+  private pageObserver?: MutationObserver;
 
   constructor(
     @Inject(DOCUMENT) private readonly documentRef: Document,
@@ -42,6 +43,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit(): void {
     this.refreshPaymentState(null);
+    this.watchPageForFinesBalance();
 
     if (!this.store) {
       return;
@@ -59,6 +61,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.storeSubscription?.unsubscribe();
+    this.pageObserver?.disconnect();
   }
 
   pay(): void {
@@ -76,6 +79,29 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
 
   private refreshPaymentState(storeContext: PatronFineContext | null): void {
     const context = extractPatronFineContext(this.documentRef, this.hostComponent, storeContext);
-    this.paymentState = getPaymentState(this.paymentConfig, context);
+    const nextPaymentState = getPaymentState(this.paymentConfig, context);
+
+    if (
+      this.paymentState.visible === nextPaymentState.visible
+      && this.paymentState.paymentUrl === nextPaymentState.paymentUrl
+      && this.paymentState.reason === nextPaymentState.reason
+    ) {
+      return;
+    }
+
+    this.paymentState = nextPaymentState;
+  }
+
+  private watchPageForFinesBalance(): void {
+    if (typeof MutationObserver === 'undefined' || !this.documentRef.body) {
+      return;
+    }
+
+    this.pageObserver = new MutationObserver(() => this.refreshPaymentState(null));
+    this.pageObserver.observe(this.documentRef.body, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
   }
 }

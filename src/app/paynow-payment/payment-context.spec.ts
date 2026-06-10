@@ -80,6 +80,26 @@ describe('extractPatronFineContext', () => {
     });
   });
 
+  it('does not use non-visible fine values while the current fines balance is still loading', () => {
+    const page = document.createElement('main');
+    page.textContent = 'Active Fines 1-2 of 2 Fines and Fees';
+
+    const context = extractPatronFineContext(
+      page,
+      {
+        displayName: 'Daniel Lee',
+        patronId: 'D100',
+        total: 2,
+        finesCounters: 2,
+        fines: [
+          { amount: 0.4 },
+        ],
+      },
+    );
+
+    expect(context).toBeNull();
+  });
+
   it('reads the patron name from a scoped profile section without using institution name', () => {
     const page = document.createElement('main');
     page.innerHTML = `
