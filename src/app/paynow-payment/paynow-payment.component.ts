@@ -1,7 +1,9 @@
 import {
+  ChangeDetectorRef,
   Component,
   Inject,
   Input,
+  NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -31,9 +33,13 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
 
   private storeSubscription?: Subscription;
   private pageObserver?: MutationObserver;
+  private balancePollingIntervalId?: number;
+  private balancePollingAttempts = 0;
 
   constructor(
     @Inject(DOCUMENT) private readonly documentRef: Document,
+    private readonly changeDetectorRef: ChangeDetectorRef,
+    private readonly ngZone: NgZone,
     @Optional() @Inject('MODULE_PARAMETERS') moduleParameters: unknown,
     @Optional() private readonly store: Store<unknown> | null,
   ) {
@@ -44,6 +50,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     this.refreshPaymentState(null);
     this.watchPageForFinesBalance();
+    this.startBalancePolling();
 
     if (!this.store) {
       return;
@@ -62,6 +69,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   ngOnDestroy(): void {
     this.storeSubscription?.unsubscribe();
     this.pageObserver?.disconnect();
+    this.stopBalancePolling();
   }
 
   pay(): void {
@@ -90,6 +98,11 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.paymentState = nextPaymentState;
+    this.changeDetectorRef.markForCheck();
+
+    if (nextPaymentState.visible) {
+      this.stopBalancePolling();
+    }
   }
 
   private watchPageForFinesBalance(): void {
@@ -97,11 +110,44 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
       return;
     }
 
-    this.pageObserver = new MutationObserver(() => this.refreshPaymentState(null));
+    this.pageObserver = new MutationObserver(() => {
+      this.ngZone.run(() => this.refreshPaymentState(null));
+    });
     this.pageObserver.observe(this.documentRef.body, {
       childList: true,
       characterData: true,
       subtree: true,
     });
+  }
+
+  private startBalancePolling(): void {
+    const windowRef = this.documentRef.defaultView;
+
+    if (!windowRef || this.balancePollingIntervalId !== undefined) {
+      return;
+    }
+
+    this.ngZone.runOutsideAngular(() => {
+      this.balancePollingIntervalId = windowRef.setInterval(() => {
+        this.balancePollingAttempts += 1;
+
+        this.ngZone.run(() => this.refreshPaymentState(null));
+
+        if (this.balancePollingAttempts >= 80) {
+          this.stopBalancePolling();
+        }
+      }, 250);
+    });
+  }
+
+  private stopBalancePolling(): void {
+    const windowRef = this.documentRef.defaultView;
+
+    if (!windowRef || this.balancePollingIntervalId === undefined) {
+      return;
+    }
+
+    windowRef.clearInterval(this.balancePollingIntervalId);
+    this.balancePollingIntervalId = undefined;
   }
 }
