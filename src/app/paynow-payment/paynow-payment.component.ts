@@ -11,12 +11,10 @@ import {
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Store } from '@ngrx/store';
-import { distinctUntilChanged, map, Subscription } from 'rxjs';
+import { distinctUntilChanged, Subscription } from 'rxjs';
 import { normalizePaymentConfig, PaymentConfig } from './payment-config';
 import {
   extractPatronFineContext,
-  patronFineContextsEqual,
-  PatronFineContext,
 } from './payment-context';
 import { getPaymentState, PaymentState } from './payment-state';
 
@@ -35,6 +33,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   private pageObserver?: MutationObserver;
   private balancePollingIntervalId?: number;
   private balancePollingAttempts = 0;
+  private latestStoreState?: unknown;
 
   constructor(
     @Inject(DOCUMENT) private readonly documentRef: Document,
@@ -48,7 +47,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.refreshPaymentState(null);
+    this.refreshPaymentState();
     this.watchPageForFinesBalance();
     this.startBalancePolling();
 
@@ -57,13 +56,15 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.storeSubscription = this.store.pipe(
-      map((state) => extractPatronFineContext(this.documentRef, this.hostComponent, state)),
-      distinctUntilChanged(patronFineContextsEqual),
-    ).subscribe((context) => this.refreshPaymentState(context));
+      distinctUntilChanged(),
+    ).subscribe((state) => {
+      this.latestStoreState = state;
+      this.refreshPaymentState();
+    });
   }
 
   ngOnChanges(): void {
-    this.refreshPaymentState(null);
+    this.refreshPaymentState();
   }
 
   ngOnDestroy(): void {
@@ -85,8 +86,8 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
     window.open(this.paymentState.paymentUrl, '_blank', 'noopener,noreferrer');
   }
 
-  private refreshPaymentState(storeContext: PatronFineContext | null): void {
-    const context = extractPatronFineContext(this.documentRef, this.hostComponent, storeContext);
+  private refreshPaymentState(): void {
+    const context = extractPatronFineContext(this.documentRef, this.hostComponent, this.latestStoreState);
     const nextPaymentState = getPaymentState(this.paymentConfig, context);
 
     if (
@@ -111,7 +112,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.pageObserver = new MutationObserver(() => {
-      this.ngZone.run(() => this.refreshPaymentState(null));
+      this.ngZone.run(() => this.refreshPaymentState());
     });
     this.pageObserver.observe(this.documentRef.body, {
       childList: true,
@@ -131,7 +132,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
       this.balancePollingIntervalId = windowRef.setInterval(() => {
         this.balancePollingAttempts += 1;
 
-        this.ngZone.run(() => this.refreshPaymentState(null));
+        this.ngZone.run(() => this.refreshPaymentState());
 
         if (this.balancePollingAttempts >= 80) {
           this.stopBalancePolling();
