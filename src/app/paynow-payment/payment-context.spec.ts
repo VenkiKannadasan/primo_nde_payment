@@ -107,6 +107,61 @@ describe('extractPatronFineContext', () => {
     });
   });
 
+  it('does not use fine type or item names as the patron name', () => {
+    const page = document.createElement('main');
+    page.textContent = 'Current fines balance is 0.10 SGD';
+
+    const context = extractPatronFineContext(
+      page,
+      {
+        patronId: 'D100',
+        fines: [
+          {
+            name: 'Other',
+            fineType: {
+              name: 'Active',
+            },
+            amount: 25,
+          },
+        ],
+      },
+    );
+
+    expect(context).toBeNull();
+  });
+
+  it('uses profile-scoped name fields instead of fine item names', () => {
+    const page = document.createElement('main');
+    page.textContent = 'Current fines balance is 0.10 SGD';
+
+    const context = extractPatronFineContext(
+      page,
+      {
+        patronId: 'D100',
+        user: {
+          profile: {
+            name: 'Daniel Lee',
+          },
+        },
+        fines: [
+          {
+            name: 'Other',
+            fineType: {
+              name: 'Active',
+            },
+            amount: 25,
+          },
+        ],
+      },
+    );
+
+    expect(context).toEqual({
+      patronName: 'Daniel Lee',
+      patronId: 'D100',
+      fineAmount: 0.1,
+    });
+  });
+
   it('returns null when required patron fields are missing', () => {
     expect(extractPatronFineContext({ finesCounters: 3 })).toBeNull();
   });

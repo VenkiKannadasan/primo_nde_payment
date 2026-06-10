@@ -84,7 +84,7 @@ function extractPatronFineCandidate(source: unknown): PatronFineCandidate {
     patronName: firstString(
       readStringByPath(decodedToken, ['displayName']),
       readStringByPath(decodedToken, ['name']),
-      findStringValue(source, isNameKey),
+      findPatronNameValue(source),
     ),
     patronId: firstString(
       readStringByPath(decodedToken, ['userName']),
@@ -166,6 +166,43 @@ function findStringValue(
   for (const value of Object.values(source)) {
     if (isRecord(value) || Array.isArray(value)) {
       const nestedValue = findStringValue(value, keyPredicate, visited, depth + 1);
+
+      if (nestedValue) {
+        return nestedValue;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function findPatronNameValue(
+  source: unknown,
+  visited = new Set<object>(),
+  depth = 0,
+  path: string[] = [],
+): string | undefined {
+  if (!isRecord(source) || depth > 5 || visited.has(source)) {
+    return undefined;
+  }
+
+  visited.add(source);
+
+  for (const [key, value] of Object.entries(source)) {
+    const normalizedKey = normalizeKey(key);
+
+    if (isExplicitPatronNameKey(normalizedKey) || isProfileScopedNameKey(normalizedKey, path)) {
+      const stringValue = toNonEmptyString(value);
+
+      if (stringValue) {
+        return stringValue;
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(source)) {
+    if (isRecord(value) || Array.isArray(value)) {
+      const nestedValue = findPatronNameValue(value, visited, depth + 1, [...path, key]);
 
       if (nestedValue) {
         return nestedValue;
@@ -402,14 +439,33 @@ function normalizeKey(key: string): string {
   return key.replace(/[-_\s]/g, '').toLowerCase();
 }
 
-function isNameKey(key: string): boolean {
-  const normalizedKey = normalizeKey(key);
+function isExplicitPatronNameKey(normalizedKey: string): boolean {
   return [
     'displayname',
     'fullname',
     'patronname',
     'preferredname',
-    'name',
+  ].includes(normalizedKey);
+}
+
+function isProfileScopedNameKey(normalizedKey: string, path: string[]): boolean {
+  return normalizedKey === 'name' && path.some((pathPart) => isPatronProfilePathKey(pathPart));
+}
+
+function isPatronProfilePathKey(key: string): boolean {
+  const normalizedKey = normalizeKey(key);
+
+  return [
+    'account',
+    'borrower',
+    'currentuser',
+    'patron',
+    'personal',
+    'personalinfo',
+    'profile',
+    'user',
+    'userinfo',
+    'userprofile',
   ].includes(normalizedKey);
 }
 
