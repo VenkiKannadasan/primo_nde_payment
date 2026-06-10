@@ -39,13 +39,15 @@ Use this JSON in Alma's Add-on Configuration. Update the FormSG field IDs for ea
   "nameFieldId": "YOUR_NAME_FIELD_ID",
   "patronIdFieldId": "YOUR_PATRON_ID_FIELD_ID",
   "amountFieldId": "YOUR_PAYMENT_AMOUNT_FIELD_ID",
-  "amountMultiplier": 100,
+  "amountMultiplier": 1,
   "buttonLabel": "Pay via PayNow",
   "openInSameTab": true
 }
 ```
 
 The add-on hides the button when any required FormSG config is missing, the patron context is unavailable, or the fine amount is zero or invalid.
+
+Use `amountMultiplier: 1` when FormSG should receive the same displayed SGD amount. For example, `0.40 SGD` is sent as `0.40`. Only use another multiplier if a payment form explicitly requires a different unit.
 
 ## NDE Hook
 

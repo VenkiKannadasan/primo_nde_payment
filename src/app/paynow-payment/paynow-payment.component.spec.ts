@@ -135,6 +135,6 @@ describe('PayNowPaymentComponent', () => {
 
     const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement | null;
     expect(button?.textContent?.trim()).toBe('Pay via PayNow');
-    expect(fixture.componentInstance.paymentState.paymentUrl).toContain('amount=40.00');
+    expect(fixture.componentInstance.paymentState.paymentUrl).toContain('amount=0.40');
   });
 });

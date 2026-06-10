@@ -8,7 +8,7 @@ describe('buildFormSgUrl', () => {
     nameFieldId: 'name_field_id',
     patronIdFieldId: 'patron_id_field_id',
     amountFieldId: 'payment_amount_field_id',
-    amountMultiplier: 100,
+    amountMultiplier: 1,
     buttonLabel: 'Pay via PayNow',
     openInSameTab: true,
   };
@@ -27,7 +27,7 @@ describe('buildFormSgUrl', () => {
     const parsedUrl = new URL(paymentUrl ?? '');
     expect(parsedUrl.searchParams.get(config.nameFieldId)).toBe(context.patronName);
     expect(parsedUrl.searchParams.get(config.patronIdFieldId)).toBe(context.patronId);
-    expect(parsedUrl.searchParams.get(config.amountFieldId)).toBe('1234.00');
+    expect(parsedUrl.searchParams.get(config.amountFieldId)).toBe('12.34');
   });
 
   it('keeps existing query parameters from the configured FormSG URL', () => {
@@ -56,11 +56,15 @@ describe('buildFormSgUrl', () => {
 });
 
 describe('formatPaymentAmount', () => {
-  it('preserves the current cents-style amount conversion by default', () => {
-    expect(formatPaymentAmount(12.34, 100)).toBe('1234.00');
+  it('preserves the displayed currency amount by default', () => {
+    expect(formatPaymentAmount(12.34, 1)).toBe('12.34');
   });
 
-  it('rounds the converted amount before sending it to FormSG', () => {
-    expect(formatPaymentAmount(12.345, 100)).toBe('1235.00');
+  it('rounds the currency amount before sending it to FormSG', () => {
+    expect(formatPaymentAmount(12.345, 1)).toBe('12.35');
+  });
+
+  it('can still apply a configured multiplier when needed', () => {
+    expect(formatPaymentAmount(12.34, 100)).toBe('1234.00');
   });
 });

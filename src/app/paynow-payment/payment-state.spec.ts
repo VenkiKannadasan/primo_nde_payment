@@ -8,7 +8,7 @@ describe('getPaymentState', () => {
     nameFieldId: 'name',
     patronIdFieldId: 'patron',
     amountFieldId: 'amount',
-    amountMultiplier: 100,
+    amountMultiplier: 1,
     buttonLabel: 'Pay via PayNow',
     openInSameTab: true,
   };

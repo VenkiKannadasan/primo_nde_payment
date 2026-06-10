@@ -13,7 +13,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   nameFieldId: '',
   patronIdFieldId: '',
   amountFieldId: '',
-  amountMultiplier: 100,
+  amountMultiplier: 1,
   buttonLabel: 'Pay via PayNow',
   openInSameTab: true,
 };

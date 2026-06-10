@@ -26,5 +26,5 @@ export function buildFormSgUrl(
 }
 
 export function formatPaymentAmount(fineAmount: number, amountMultiplier: number): string {
-  return Math.round(fineAmount * amountMultiplier).toFixed(2);
+  return (Math.round(fineAmount * amountMultiplier * 100) / 100).toFixed(2);
 }
