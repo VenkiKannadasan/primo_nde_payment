@@ -58,6 +58,55 @@ describe('extractPatronFineContext', () => {
     expect(context?.fineAmount).toBe(4);
   });
 
+  it('prefers the visible current fines balance over itemized fine amounts', () => {
+    const page = document.createElement('main');
+    page.textContent = 'Current fines balance is 0.1 SGD Active Fines Debit 0.10 SGD';
+
+    const context = extractPatronFineContext(
+      page,
+      {
+        displayName: 'Daniel Lee',
+        patronId: 'D100',
+        fines: [
+          { amount: 25 },
+        ],
+      },
+    );
+
+    expect(context).toEqual({
+      patronName: 'Daniel Lee',
+      patronId: 'D100',
+      fineAmount: 0.1,
+    });
+  });
+
+  it('reads the patron name from a scoped profile section without using institution name', () => {
+    const page = document.createElement('main');
+    page.innerHTML = `
+      <section aria-label="Profile">
+        <p>Name: Lim Mei</p>
+        <p>User ID: L100</p>
+      </section>
+      <section>
+        <p>Current fines balance is 0.10 SGD</p>
+        <p>Institution Name: Ngee Ann Polytechnic</p>
+      </section>
+    `;
+
+    const context = extractPatronFineContext(
+      page,
+      {
+        patronId: 'L100',
+      },
+    );
+
+    expect(context).toEqual({
+      patronName: 'Lim Mei',
+      patronId: 'L100',
+      fineAmount: 0.1,
+    });
+  });
+
   it('returns null when required patron fields are missing', () => {
     expect(extractPatronFineContext({ finesCounters: 3 })).toBeNull();
   });

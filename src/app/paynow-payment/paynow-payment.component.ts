@@ -7,6 +7,7 @@ import {
   OnInit,
   Optional,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { distinctUntilChanged, map, Subscription } from 'rxjs';
 import { normalizePaymentConfig, PaymentConfig } from './payment-config';
@@ -31,6 +32,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   private storeSubscription?: Subscription;
 
   constructor(
+    @Inject(DOCUMENT) private readonly documentRef: Document,
     @Optional() @Inject('MODULE_PARAMETERS') moduleParameters: unknown,
     @Optional() private readonly store: Store<unknown> | null,
   ) {
@@ -46,7 +48,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.storeSubscription = this.store.pipe(
-      map((state) => extractPatronFineContext(this.hostComponent, state)),
+      map((state) => extractPatronFineContext(this.documentRef, this.hostComponent, state)),
       distinctUntilChanged(patronFineContextsEqual),
     ).subscribe((context) => this.refreshPaymentState(context));
   }
@@ -60,6 +62,8 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   pay(): void {
+    this.refreshPaymentState(null);
+
     if (!this.paymentState.paymentUrl) {
       return;
     }
@@ -73,7 +77,7 @@ export class PayNowPaymentComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private refreshPaymentState(storeContext: PatronFineContext | null): void {
-    const context = extractPatronFineContext(this.hostComponent, storeContext);
+    const context = extractPatronFineContext(this.documentRef, this.hostComponent, storeContext);
     this.paymentState = getPaymentState(this.paymentConfig, context);
   }
 }

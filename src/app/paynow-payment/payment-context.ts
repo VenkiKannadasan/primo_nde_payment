@@ -68,6 +68,12 @@ export function patronFineContextsEqual(
 }
 
 function extractPatronFineCandidate(source: unknown): PatronFineCandidate {
+  const pageCandidate = extractPageTextCandidate(source);
+
+  if (pageCandidate) {
+    return pageCandidate;
+  }
+
   if (!isRecord(source)) {
     return {};
   }
@@ -87,6 +93,19 @@ function extractPatronFineCandidate(source: unknown): PatronFineCandidate {
       findStringValue(source, isPatronIdKey),
     ),
     fineAmount: findFineAmount(source),
+  };
+}
+
+function extractPageTextCandidate(source: unknown): PatronFineCandidate | null {
+  const pageText = readPageText(source);
+
+  if (!pageText) {
+    return null;
+  }
+
+  return {
+    patronName: readProfileName(source, pageText),
+    fineAmount: readCurrentFinesBalance(pageText),
   };
 }
 
@@ -265,8 +284,118 @@ function parseAmount(value: unknown): number | undefined {
   return Number.isFinite(parsedValue) ? parsedValue : undefined;
 }
 
+function readPageText(source: unknown): string | undefined {
+  if (!isDomTextSource(source)) {
+    return undefined;
+  }
+
+  const textContent = (
+    isDocumentSource(source)
+      ? source.body?.textContent
+      : source.textContent
+  )?.replace(/\s+/g, ' ').trim();
+
+  return textContent || undefined;
+}
+
+function readProfileName(source: unknown, pageText: string): string | undefined {
+  if (isQueryableDomSource(source)) {
+    const profileElements = source.querySelectorAll(
+      '[aria-label*="profile" i], [id*="profile" i], [class*="profile" i], [data-testid*="profile" i]',
+    );
+
+    for (const profileElement of Array.from(profileElements)) {
+      const profileName = readLabeledName(profileElement.textContent ?? '', true);
+
+      if (profileName) {
+        return profileName;
+      }
+    }
+  }
+
+  if (isElementSource(source) && hasProfileHint(source)) {
+    const scopedProfileName = readLabeledName(source.textContent ?? '', true);
+
+    if (scopedProfileName) {
+      return scopedProfileName;
+    }
+  }
+
+  return readLabeledName(pageText, false);
+}
+
+function readCurrentFinesBalance(pageText: string): number | undefined {
+  const balanceMatch = pageText.match(/current\s+fines?\s+balance\s+is\s+(-?\d[\d,]*(?:\.\d+)?)\s*[A-Z]{0,3}/i);
+
+  if (!balanceMatch) {
+    return undefined;
+  }
+
+  return parseAmount(balanceMatch[1]);
+}
+
+function readLabeledName(text: string, allowPlainNameLabel: boolean): string | undefined {
+  const normalizedText = text.replace(/\s+/g, ' ').trim();
+  const labels = allowPlainNameLabel
+    ? ['Preferred Name', 'Display Name', 'Full Name', 'Patron Name', 'Name']
+    : ['Preferred Name', 'Display Name', 'Full Name', 'Patron Name'];
+
+  for (const label of labels) {
+    const nameMatch = normalizedText.match(new RegExp(`${label}\\s*:?\\s*([^:]+?)(?=\\s+(?:Preferred Name|Display Name|Full Name|Patron Name|Name|User ID|Barcode|Email|Address|Phone|Current fines balance)\\b|$)`, 'i'));
+
+    if (!nameMatch) {
+      continue;
+    }
+
+    const name = cleanProfileName(nameMatch[1]);
+
+    if (name) {
+      return name;
+    }
+  }
+
+  return undefined;
+}
+
+function cleanProfileName(value: string): string | undefined {
+  const cleanValue = value.replace(/\s+/g, ' ').trim();
+
+  if (!cleanValue || /^(not available|none|null|undefined)$/i.test(cleanValue)) {
+    return undefined;
+  }
+
+  return cleanValue;
+}
+
 function isRecord(value: unknown): value is UnknownRecord {
   return value !== null && typeof value === 'object';
+}
+
+function isDomTextSource(value: unknown): value is Document | Element {
+  return isDocumentSource(value) || isElementSource(value);
+}
+
+function isDocumentSource(value: unknown): value is Document {
+  return typeof Document !== 'undefined' && value instanceof Document;
+}
+
+function isElementSource(value: unknown): value is Element {
+  return typeof Element !== 'undefined' && value instanceof Element;
+}
+
+function isQueryableDomSource(value: unknown): value is Document | Element {
+  return isDocumentSource(value) || isElementSource(value);
+}
+
+function hasProfileHint(element: Element): boolean {
+  const profileText = [
+    element.getAttribute('aria-label'),
+    element.getAttribute('id'),
+    element.getAttribute('class'),
+    element.getAttribute('data-testid'),
+  ].join(' ');
+
+  return /profile/i.test(profileText);
 }
 
 function normalizeKey(key: string): string {
