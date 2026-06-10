@@ -6,7 +6,7 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'custom-module';
+  title = 'primo_nde_payment';
   public getTitle(){
     return this.title;
   }

@@ -13,7 +13,7 @@ sharedMappings.register(
 module.exports = {
   context: path.resolve(__dirname), // Sets the context to the directory where webpack.config.js is
   output: {
-    uniqueName: "customModule",
+    uniqueName: "primo_nde_payment",
     publicPath: 'auto',
   },
   optimization: {
@@ -58,10 +58,10 @@ module.exports = {
         library: { type: "module" },
 
         // For remotes (please adjust)
-        name: "customModule",
+        name: "primo_nde_payment",
         filename: "remoteEntry.js",
         exposes: {
-            './custom-module': './src/bootstrap.ts',
+            './primo_nde_payment': './src/bootstrapprimo_nde_payment.ts',
         },
 
         // For hosts (please adjust)

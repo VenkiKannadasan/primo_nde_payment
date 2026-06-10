@@ -8,6 +8,7 @@ import {TranslateModule} from "@ngx-translate/core";
 import { CommonModule } from '@angular/common';
 import { AutoAssetSrcDirective } from './services/auto-asset-src.directive';
 import {SHELL_ROUTER} from "./injection-tokens";
+import { PayNowPaymentComponent } from './paynow-payment/paynow-payment.component';
 
 
 
@@ -15,7 +16,8 @@ export const AppModule = ({providers, shellRouter}: {providers:any, shellRouter:
    @NgModule({
     declarations: [
       AppComponent,
-      AutoAssetSrcDirective
+      AutoAssetSrcDirective,
+      PayNowPaymentComponent
     ],
     exports: [AutoAssetSrcDirective],
     imports: [
@@ -50,4 +52,3 @@ export const AppModule = ({providers, shellRouter}: {providers:any, shellRouter:
   }
   return AppModule
 }
-

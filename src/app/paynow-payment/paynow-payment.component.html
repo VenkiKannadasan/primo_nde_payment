@@ -1,0 +1,10 @@
+<div class="primo-nde-paynow-payment" *ngIf="paymentState.visible">
+  <button
+    type="button"
+    class="primo-nde-paynow-payment__button"
+    (click)="pay()"
+    [attr.aria-label]="paymentConfig.buttonLabel"
+  >
+    {{ paymentConfig.buttonLabel }}
+  </button>
+</div>
