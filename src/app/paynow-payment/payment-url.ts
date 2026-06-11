@@ -12,13 +12,14 @@ export function buildFormSgUrl(
   try {
     const paymentUrl = new URL(config.formBaseUrl);
     const paymentAmount = formatPaymentAmount(context.fineAmount, config.amountMultiplier);
+    const outstandingAmount = formatPaymentAmount(context.fineAmount, 1);
 
     paymentUrl.searchParams.set(config.nameFieldId, context.patronName);
     paymentUrl.searchParams.set(config.patronIdFieldId, context.patronId);
     paymentUrl.searchParams.set(config.amountFieldId, paymentAmount);
 
     if (config.outstandingAmountFieldId.trim()) {
-      paymentUrl.searchParams.set(config.outstandingAmountFieldId, paymentAmount);
+      paymentUrl.searchParams.set(config.outstandingAmountFieldId, outstandingAmount);
     }
 
     return paymentUrl.toString();

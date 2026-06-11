@@ -48,9 +48,9 @@ Use this JSON in Alma's Add-on Configuration. Update the FormSG field IDs for ea
 
 The add-on hides the button when any required FormSG config is missing, the patron context is unavailable, or the fine amount is zero or invalid.
 
-Use `amountMultiplier: 1` when FormSG should receive the same displayed SGD amount. For example, `0.40 SGD` is sent as `0.40`. Only use another multiplier if a payment form explicitly requires a different unit.
+Use `amountMultiplier: 1` when the FormSG payment field should receive the same displayed SGD amount. For example, `0.40 SGD` is sent as `0.40`. Only use another multiplier if the payment field explicitly requires a different unit.
 
-`outstandingAmountFieldId` is optional. Use it when the FormSG form has a separate read-only/display field for the total outstanding fines or fees amount in addition to the actual payment amount field.
+`outstandingAmountFieldId` is optional. Use it when the FormSG form has a separate read-only/display field for the total outstanding fines or fees amount in addition to the actual payment amount field. This field always receives the displayed balance amount and is not affected by `amountMultiplier`.
 
 To temporarily remove the PayNow button during a payment gateway or FormSG issue, deactivate or disable this add-on in Alma for the affected view. No JSON flag is required.
 

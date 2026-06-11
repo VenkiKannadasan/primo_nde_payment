@@ -57,6 +57,24 @@ describe('buildFormSgUrl', () => {
     expect(parsedUrl.searchParams.get(config.amountFieldId)).toBe('12.34');
   });
 
+  it('does not apply the payment multiplier to the optional outstanding amount field', () => {
+    const paymentUrl = buildFormSgUrl(
+      {
+        ...config,
+        outstandingAmountFieldId: 'outstanding_amount_field_id',
+        amountMultiplier: 100,
+      },
+      {
+        ...context,
+        fineAmount: 1,
+      },
+    );
+
+    const parsedUrl = new URL(paymentUrl ?? '');
+    expect(parsedUrl.searchParams.get('outstanding_amount_field_id')).toBe('1.00');
+    expect(parsedUrl.searchParams.get(config.amountFieldId)).toBe('100.00');
+  });
+
   it('returns null when config is incomplete', () => {
     expect(buildFormSgUrl({ ...config, nameFieldId: '' }, context)).toBeNull();
   });
