@@ -7,6 +7,7 @@ describe('getPaymentState', () => {
     formBaseUrl: 'https://form.gov.sg/example',
     nameFieldId: 'name',
     patronIdFieldId: 'patron',
+    outstandingAmountFieldId: '',
     amountFieldId: 'amount',
     amountMultiplier: 1,
     buttonLabel: 'Pay via PayNow',

@@ -2,6 +2,7 @@ export interface PaymentConfig {
   formBaseUrl: string;
   nameFieldId: string;
   patronIdFieldId: string;
+  outstandingAmountFieldId: string;
   amountFieldId: string;
   amountMultiplier: number;
   buttonLabel: string;
@@ -12,6 +13,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
   formBaseUrl: '',
   nameFieldId: '',
   patronIdFieldId: '',
+  outstandingAmountFieldId: '',
   amountFieldId: '',
   amountMultiplier: 1,
   buttonLabel: 'Pay via PayNow',
@@ -25,11 +27,21 @@ export function normalizePaymentConfig(rawConfig: unknown): PaymentConfig {
     formBaseUrl: readString(config, 'formBaseUrl', DEFAULT_PAYMENT_CONFIG.formBaseUrl),
     nameFieldId: readString(config, 'nameFieldId', DEFAULT_PAYMENT_CONFIG.nameFieldId),
     patronIdFieldId: readString(config, 'patronIdFieldId', DEFAULT_PAYMENT_CONFIG.patronIdFieldId),
+    outstandingAmountFieldId: firstString(
+      readString(config, 'outstandingAmountFieldId', ''),
+      readString(config, 'fullAmountFieldId', ''),
+      readString(config, 'fullamountFieldId', ''),
+      DEFAULT_PAYMENT_CONFIG.outstandingAmountFieldId,
+    ),
     amountFieldId: readString(config, 'amountFieldId', DEFAULT_PAYMENT_CONFIG.amountFieldId),
     amountMultiplier: readNumber(config, 'amountMultiplier', DEFAULT_PAYMENT_CONFIG.amountMultiplier),
     buttonLabel: readString(config, 'buttonLabel', DEFAULT_PAYMENT_CONFIG.buttonLabel),
     openInSameTab: readBoolean(config, 'openInSameTab', DEFAULT_PAYMENT_CONFIG.openInSameTab),
   };
+}
+
+function firstString(...values: string[]): string {
+  return values.find((value) => Boolean(value.trim())) ?? '';
 }
 
 export function isPaymentConfigReady(config: PaymentConfig): boolean {

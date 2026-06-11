@@ -11,13 +11,15 @@ export function buildFormSgUrl(
 
   try {
     const paymentUrl = new URL(config.formBaseUrl);
+    const paymentAmount = formatPaymentAmount(context.fineAmount, config.amountMultiplier);
 
     paymentUrl.searchParams.set(config.nameFieldId, context.patronName);
     paymentUrl.searchParams.set(config.patronIdFieldId, context.patronId);
-    paymentUrl.searchParams.set(
-      config.amountFieldId,
-      formatPaymentAmount(context.fineAmount, config.amountMultiplier),
-    );
+    paymentUrl.searchParams.set(config.amountFieldId, paymentAmount);
+
+    if (config.outstandingAmountFieldId.trim()) {
+      paymentUrl.searchParams.set(config.outstandingAmountFieldId, paymentAmount);
+    }
 
     return paymentUrl.toString();
   } catch {

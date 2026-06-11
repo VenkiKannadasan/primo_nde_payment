@@ -1,4 +1,4 @@
-import { PaymentConfig } from './payment-config';
+import { normalizePaymentConfig, PaymentConfig } from './payment-config';
 import { PatronFineContext } from './payment-context';
 import { buildFormSgUrl, formatPaymentAmount } from './payment-url';
 
@@ -7,6 +7,7 @@ describe('buildFormSgUrl', () => {
     formBaseUrl: 'https://form.gov.sg/example-form-id',
     nameFieldId: 'name_field_id',
     patronIdFieldId: 'patron_id_field_id',
+    outstandingAmountFieldId: '',
     amountFieldId: 'payment_amount_field_id',
     amountMultiplier: 1,
     buttonLabel: 'Pay via PayNow',
@@ -42,6 +43,20 @@ describe('buildFormSgUrl', () => {
     expect(new URL(paymentUrl ?? '').searchParams.get('source')).toBe('primo');
   });
 
+  it('prefills the optional outstanding amount field when configured', () => {
+    const paymentUrl = buildFormSgUrl(
+      {
+        ...config,
+        outstandingAmountFieldId: 'outstanding_amount_field_id',
+      },
+      context,
+    );
+
+    const parsedUrl = new URL(paymentUrl ?? '');
+    expect(parsedUrl.searchParams.get('outstanding_amount_field_id')).toBe('12.34');
+    expect(parsedUrl.searchParams.get(config.amountFieldId)).toBe('12.34');
+  });
+
   it('returns null when config is incomplete', () => {
     expect(buildFormSgUrl({ ...config, nameFieldId: '' }, context)).toBeNull();
   });
@@ -52,6 +67,20 @@ describe('buildFormSgUrl', () => {
 
   it('returns null when the FormSG URL is invalid', () => {
     expect(buildFormSgUrl({ ...config, formBaseUrl: 'not a url' }, context)).toBeNull();
+  });
+});
+
+describe('normalizePaymentConfig', () => {
+  it('accepts full amount field aliases for older draft JSON names', () => {
+    const config = normalizePaymentConfig({
+      formBaseUrl: 'https://form.gov.sg/example-form-id',
+      nameFieldId: 'name_field_id',
+      patronIdFieldId: 'patron_id_field_id',
+      fullamountFieldId: 'draft_full_amount_field_id',
+      amountFieldId: 'payment_amount_field_id',
+    });
+
+    expect(config.outstandingAmountFieldId).toBe('draft_full_amount_field_id');
   });
 });
 
